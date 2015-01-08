@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby -KU
+
+#
+# Simplifies applying a git stash
+#
+# Prerequisites:
+# "gem install highline"
+
+require 'rubygems'
+require 'highline/import'
+
+def get_stashes
+  stashes = []
+  `git stash list`.split("\n").map do |line|
+    number, name = line.split('}: ');
+    number.sub!('stash@{', '')
+    stashes << { number: number, name: name }
+  end
+  stashes
+end
+
+def choose_stash
+  stashes = get_stashes
+  if stashes.count > 0
+    choose do |menu|
+      menu.prompt = "Choose a stash: "
+      stashes.each do |stash|
+        menu.choice stash[:name] { return stash[:number] }
+      end
+    end
+  else 
+    puts "No stashes here."
+  end
+end
+
+def apply(stash_number)
+  puts "Applying stash..."
+  puts `git stash apply stash@{#{stash_number}}`
+end
+
+stash = choose_stash
+apply(stash) if stash
+
+
+
